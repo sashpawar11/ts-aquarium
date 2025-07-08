@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>8-Bit Digital Aquarium</title>
+  </head>
+  <body>
+    <h1>8-Bit Aquarium</h1>
+
+    <div id="aquarium-container">
+      <div id="aquarium">
+        <div id="bubbles"></div>
+        <!-- Fish will be added here by JavaScript -->
+
+        <img src="/glass.png" id="glass-pane" alt="Aquarium glass"/>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="remove-fish-btn">-</button>
+      <span>Fish Count: <span id="fish-count">0</span></span>
+      <button id="add-fish-btn">+</button>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
