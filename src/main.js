@@ -1,6 +1,5 @@
 import "./style.css";
 
-// --- DOM Elements ---
 const aquarium = document.getElementById("aquarium");
 const addFishBtn = document.getElementById("add-fish-btn");
 const removeFishBtn = document.getElementById("remove-fish-btn");
@@ -10,7 +9,6 @@ const bubblesContainer = document.getElementById("bubbles");
 const feedSpan = document.getElementById("feed-span");
 
 // --- Constants ---
-// Array of available fish images in the /public folder
 const FISH_ASSETS = [
   "/fish1.png",
   "/fish2.png",
@@ -19,15 +17,13 @@ const FISH_ASSETS = [
   "/fish5.png",
 ];
 
-// Constants for randomizing fish size
-const MIN_FISH_SIZE = 30; // pixels
-const MAX_FISH_SIZE = 80; // pixels
-const FISH_ASPECT_RATIO = 5 / 3; // apect ratio of our fish (width/height)
+const MIN_FISH_SIZE = 30;
+const MAX_FISH_SIZE = 80;
+const FISH_ASPECT_RATIO = 5 / 3;
 let isFeedingMode = false;
-// --- State ---
-let fishes = []; // An array to hold our fish objects
+let animationFrameId;
 
-// --- Functions ---
+let fishes = [];
 
 function createBubble() {
   const bubble = document.createElement("div");
@@ -55,10 +51,6 @@ function createBubble() {
   bubblesContainer.appendChild(bubble);
 }
 
-/**
- * Updates the fish count display on the page.
- */
-
 function updateFishCount() {
   fishCountEl.textContent = fishes.length;
 }
@@ -76,22 +68,16 @@ function toggleFeedingMode() {
   }
 }
 
-/**
- * Updates a fish's health bar color based on its health percentage.
- * @param {object} fish The fish object to update.
- */
 function updateHealthBar(fish) {
   const { health, healthBarElement } = fish;
   healthBarElement.style.width = `${health}%`;
 
-  // Remove previous color classes
   healthBarElement.classList.remove(
     "health-green",
     "health-orange",
     "health-red"
   );
 
-  // Add the correct new color class
   if (health > 50) {
     healthBarElement.classList.add("health-green");
   } else if (health > 0) {
@@ -101,17 +87,10 @@ function updateHealthBar(fish) {
   }
 }
 
-/**
- * Increases a specific fish's health.
- * @param {object} fish The fish object to feed.
- */
 function feedFish(fish) {
-  fish.health = Math.min(100, fish.health + 20); // Add 5, but cap at 100
+  fish.health = Math.min(100, fish.health + 20);
 }
 
-/**
- * Creates a new fish with random properties and adds it to the aquarium.
- */
 function addFish() {
   const aquariumRect = aquarium.getBoundingClientRect();
 
@@ -123,7 +102,7 @@ function addFish() {
   const healthBarContainer = document.createElement("div");
   healthBarContainer.classList.add("health-bar-container");
   const healthBar = document.createElement("div");
-  healthBar.classList.add("health-bar", "health-green"); // Start green
+  healthBar.classList.add("health-bar", "health-green");
   healthBarContainer.appendChild(healthBar);
 
   // Create the fish image element
@@ -133,7 +112,6 @@ function addFish() {
     FISH_ASSETS[Math.floor(Math.random() * FISH_ASSETS.length)];
   fishImage.src = randomFishSrc;
 
-  // Append elements to the container
   fishContainer.appendChild(healthBarContainer);
   fishContainer.appendChild(fishImage);
 
@@ -144,12 +122,11 @@ function addFish() {
   fishContainer.style.width = `${newWidth}px`;
   fishContainer.style.height = `${newHeight}px`;
 
-  // Create the fish state object
   const fish = {
     element: fishContainer,
-    healthBarElement: healthBar, // Reference to the health bar
+    healthBarElement: healthBar,
     health: 100, // Starts at 100%
-    healthDecayRate: Math.random() * 0.02 + 0.01, // Slow, random decay
+    healthDecayRate: Math.random() * 0.02 + 0.01,
     x: Math.random() * (aquariumRect.width - newWidth),
     y: Math.random() * (aquariumRect.height - newHeight),
     speedX: (Math.random() - 0.5) * 2,
@@ -160,7 +137,6 @@ function addFish() {
 
   if (Math.abs(fish.speedX) < 0.5) fish.speedX = fish.speedX < 0 ? -0.5 : 0.5;
 
-  // ** NEW: Add click listener for feeding **
   fishContainer.addEventListener("click", () => {
     if (isFeedingMode) {
       feedFish(fish);
@@ -171,24 +147,21 @@ function addFish() {
   aquarium.appendChild(fishContainer);
   updateFishCount();
 }
-/**
- * Removes the most recently added fish from the aquarium.
- */
+
 function removeFish() {
   if (fishes.length === 0) return;
 
   const fishToRemove = fishes.pop();
-  fishToRemove.element.remove(); // Remove from DOM
+  fishToRemove.element.remove();
 
   updateFishCount();
 }
 
-/**
- * The main animation loop.
- * This function will be called on every frame to move the fish.
- */
 function animate() {
   const aquariumRect = aquarium.getBoundingClientRect();
+
+  // ** NEW: Store the fish count before checking for deaths **
+  const fishCountBefore = fishes.length;
 
   // Filter out dead fish and update the rest
   fishes = fishes.filter((fish) => {
@@ -220,11 +193,31 @@ function animate() {
     return true; // Keep fish in the array
   });
 
+  // ** NEW: Check for the Game Over condition **
+  // This triggers only if the fish count was greater than 0 but is now 0.
+  if (fishes.length === 0 && fishCountBefore > 0) {
+    // Stop the animation loop to prevent multiple alerts
+    // (though location.reload() would likely prevent it anyway)
+    cancelAnimationFrame(animationFrameId);
+
+    // Show the alert. The script will pause here until the user clicks "OK".
+    alert("Game Over! All your fish have died.");
+
+    // Reload the page to start over.
+    location.reload();
+    return; // Exit the function immediately
+  }
+
   // Update the count in case a fish was removed
   updateFishCount();
 
-  requestAnimationFrame(animate);
+  // ** MODIFIED: Store the request ID to be able to cancel it **
+  animationFrameId = requestAnimationFrame(animate);
 }
+
+// You also need to declare animationFrameId at the top level
+// Add this with your other state variables near the top of main.js
+
 // --- Event Listeners ---
 addFishBtn.addEventListener("click", addFish);
 removeFishBtn.addEventListener("click", removeFish);
